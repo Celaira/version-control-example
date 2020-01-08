@@ -1,5 +1,5 @@
 // Update with your config settings.
-const { database_url, database_name, database_user  } = require('./config/config');
+const { database_url, dbName, dbUser  } = require('./config/config');
 
 
 module.exports = {
@@ -7,8 +7,8 @@ module.exports = {
   development: {
     client: 'pg',
     connection: {
-      database: database_name,
-      username: database_user,
+      database: dbName,
+      user: dbUser,
     },
     migrations: {
       directory: './data/migrations'

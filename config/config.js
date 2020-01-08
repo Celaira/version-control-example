@@ -6,6 +6,6 @@ module.exports = {
     jwtSecret: process.env.JWT_SECRET,
     database_url: process.env.DB_URL,
     dbEnv: process.env.DB_ENV,
-    database_name: process.env.DB_NAME,
-    database_user: process.env.DB_USERNAME
+    dbName: process.env.DB_NAME,
+    dbUser: process.env.DB_USERNAME,
 }

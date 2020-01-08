@@ -1,7 +1,7 @@
 exports.up = function(knex) {
     return ( knex.schema
         .createTable('users', tbl => {
-            tbl.icrements('id');
+            tbl.increments('id');
             tbl.text('username')
             .unique()
             .notNullable();
@@ -43,11 +43,11 @@ exports.up = function(knex) {
             tbl.increments('id');
             tbl.integer('recipe_id')
             .references('id')
-            .intable('recipes')
+            .inTable('recipes')
             .onUpdate('CASCADE')
             .onDelete('CASCADE')
             .notNullable();
-            tbl.JSON('changes');
+            tbl.json('changes');
             tbl.datetime('date_modified').defaultTo(knex.fn.now());
             tbl.integer('owner_id')
             .references('id')
