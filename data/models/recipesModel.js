@@ -11,19 +11,15 @@ module.exports = {
 };
 
 function find() {
-  return db('recipes');
+  return db('recipes as r').join('instructions as i', 'r.id', '=', 'i.recipe_id').select('r.*', db.raw(`json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`)).groupBy('r.id');
 }
 
 function findById(id) {
-  return db("recipes").where("id", id).first();
+    return db('recipes as r').where('r.id', '=', id).join('instructions as i', 'r.id', '=', 'i.recipe_id').select('r.*', db.raw(`json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`)).groupBy('r.id').first();
 }
 
 function findByTitle(title) {
   return db("recipes").where(title);
-}
-
-function findByRecipeId(RecipeId) {
-  return db('instructions').select('*').where("recipe_id", RecipeId)
 }
 
 function add(recipe) {
@@ -39,7 +35,7 @@ function add(recipe) {
         })
         
         return db('instructions').insert(InstEntries).then(inst_rec => {
-          return db('recipes as r').where('r.id', '=', id).join('instructions as i', 'r.id', '=', 'i.recipe_id').select('r.*', db.raw(`json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`)).groupBy('r.id').first();
+          return findById(id);
         })
 
     });
