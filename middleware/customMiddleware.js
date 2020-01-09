@@ -13,7 +13,7 @@ function restrict(req, res, next) {
             message: 'Token not valid'
           });
         } else {
-          req.cook = decodedToken;
+          req.user = decodedToken;
           next();
         }
       });
