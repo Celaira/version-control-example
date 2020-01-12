@@ -4,9 +4,8 @@ module.exports = {
   find,
   findById,
   findByTitle,
-  findByRecipeId,
   add,
-  update,
+  updateRecipe,
   remove
 };
 
@@ -41,8 +40,62 @@ function add(recipe) {
     });
 }
 
-function update(changes) {
+    /*  Future Megan! Remove the transaction and figure out how to convert the recipe
+     and instruction data into stringified json and add it to the edits table
+     */
+function updateRecipe(id, changes) {
   // TODO: add code here
+      const updatedRecipe = {
+      title: changes.title,
+      prep_time: changes.prep_time,
+      cook_time: changes.cook_time,
+      notes: changes.notes
+    }
+
+    return db("recipes").where("id", id).update(updatedRecipe).then(upInst => {
+      const updatedInstructions = changes.instructions.map((inst, i) => {
+        if(!inst.step_number) {
+        return db("instructions").insert({ step_number: i +1, body: inst.body, recipe_id: id })
+        } else {
+          return db("instructions").where({recipe_id: id }).update({body: inst.body}).then(ed => {
+            const Edits = {
+              owner_id: changes.author_id,
+              recipe_id: id,
+              changes: JSON.stringify(updatedRecipe)
+            }
+
+            return db("edits").insert(Edits)
+          })
+          
+        }
+      })
+      
+      return findById(id)
+    })
+
+
+  // return db.transaction(trx => {
+  //   const updatedRecipe = {
+  //     title: changes.title,
+  //     prep_time: changes.prep_time,
+  //     cook_time: changes.cook_time,
+  //     notes: changes.notes
+  //   }
+
+
+  //   trx("recipes")
+  //   .where({id: changes.id})
+  //   .update(updatedRecipe)
+  //   .then(upRec => {
+  //     return trx("instructions").where({recipe_id: changes.id})
+  //     // then "Edits" gets a new row with a revision number + the whole JSON obj
+      
+  //   })
+  // })
+
+
+
+
 }
 
 function remove(id) {

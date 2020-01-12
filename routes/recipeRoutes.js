@@ -19,4 +19,17 @@ router.post('/', mid.restrict, (req, res) => {
     })
 })
 
+router.put('/:id', mid.restrict, (req, res) => {
+    let { id } = req.params;
+    let changes = {
+        author_id: req.user.subject,
+        ...req.body
+    }
+
+
+    recipes.updateRecipe(id, changes).then(saved => {
+        res.status(201).json(saved);
+    })
+})
+
 module.exports = router;

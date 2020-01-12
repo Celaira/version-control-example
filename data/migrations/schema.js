@@ -33,7 +33,7 @@ exports.up = function(knex) {
                 .references('id')
                 .inTable('recipes')
                 .onUpdate('CASCADE')
-                .onDelete('set null')
+                .onDelete('CASCADE')
                 .notNullable();
             tbl.integer('step_number')
             .notNullable();
@@ -47,7 +47,7 @@ exports.up = function(knex) {
             .onUpdate('CASCADE')
             .onDelete('CASCADE')
             .notNullable();
-            tbl.json('changes');
+            tbl.text('changes');
             tbl.datetime('date_modified').defaultTo(knex.fn.now());
             tbl.integer('owner_id')
             .references('id')
