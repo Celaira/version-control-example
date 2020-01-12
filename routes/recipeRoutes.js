@@ -3,6 +3,12 @@ const recipes = require('../data/models/recipesModel')
 const mid = require('../middleware/customMiddleware')
 
 
+router.get('/:id', (req, res) => {
+    recipes.findById(req.params.id).then(x => {
+        res.status(200).json(x)
+    })
+})
+
 router.post('/', mid.restrict, (req, res) => {
     console.log(req.user)
     
