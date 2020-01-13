@@ -70,72 +70,81 @@ function addInstruction(id, instructions) {
      and instruction data into stringified json and add it to the edits table
      */
 function updateRecipe(id, changes) {
-  // TODO: add code here
-  const updatedRecipe = {
-    title: changes.title,
-    prep_time: changes.prep_time,
-    cook_time: changes.cook_time,
-    notes: changes.notes
-  };
+  return db.transaction(trx => {
+    const updatedRecipe = {
+      title: changes.title,
+      prep_time: changes.prep_time,
+      cook_time: changes.cook_time,
+      notes: changes.notes
+    };
 
-  const fullRecipe = {
-    ...updatedRecipe,
-    instructions: changes.instructions
-  };
+    const fullRecipe = {
+      ...updatedRecipe,
+      instructions: changes.instructions
+    };
 
-  const Edits = {
-    owner_id: changes.author_id,
-    recipe_id: id,
-    changes: JSON.stringify(fullRecipe)
-  };
-
-  return db("recipes")
-    .where("id", id)
-    .update(updatedRecipe)
-    .then(upInst => {
-      changes.instructions.map((inst, i) => {
-        if (!inst.step_number) {
-          const instruct = {
-            step_number: i + 1,
-            body: inst.body,
-            recipe_id: id
-          };
-          return db("instructions").insert(instruct);
-        } else {
-          console.log("has a step number");
-          return db("instructions")
-            .where({ recipe_id: id })
-            .andWhere({ step_number: inst.step_number })
-            .update({ body: inst.body });
-        }
-      });
-    })
-    .then(ed => {
-      return db("edits")
-        .insert(Edits)
-        .then(eds => {
-          return findById(id);
+    return trx("recipes")
+      .where({ id })
+      .update(updatedRecipe)
+      .then(upInst => {
+        const insti = [];
+        let instiDel;
+        changes.instructions.map((inst, i) => {
+          if (!inst.step_number && !inst.body) {
+            instiDel = i + 1;
+          } else if (!inst.step_number) {
+            return insti.push({
+              step_number: i + 1,
+              body: inst.body,
+              recipe_id: id
+            });
+          } else {
+            return trx("instructions")
+              .where({ recipe_id: id })
+              .andWhere({ step_number: inst.step_number })
+              .update({ body: inst.body });
+          }
         });
-    });
+        return trx("instructions")
+          .insert(insti)
+          .then(ed => {
+            return trx("instructions")
+              .where({ recipe_id: id })
+              .andWhere({ step_number: instiDel })
+              .del()
+              .then(eds => {
+                const Edits = {
+                  owner_id: changes.author_id,
+                  recipe_id: id,
+                  changes: JSON.stringify(fullRecipe)
+                };
 
-  // return db.transaction(trx => {
-  //   const updatedRecipe = {
-  //     title: changes.title,
-  //     prep_time: changes.prep_time,
-  //     cook_time: changes.cook_time,
-  //     notes: changes.notes
-  //   }
-
-  //   trx("recipes")
-  //   .where({id: changes.id})
-  //   .update(updatedRecipe)
-  //   .then(upRec => {
-  //     return trx("instructions").where({recipe_id: changes.id})
-  //     // then "Edits" gets a new row with a revision number + the whole JSON obj
-
-  //   })
-  // })
+                return trx("edits")
+                  .insert(Edits)
+                  .then(eds => findById(id));
+              });
+          });
+      });
+  });
 }
+
+// return db.transaction(trx => {
+//   const updatedRecipe = {
+//     title: changes.title,
+//     prep_time: changes.prep_time,
+//     cook_time: changes.cook_time,
+//     notes: changes.notes
+//   }
+
+//   trx("recipes")
+//   .where({id: changes.id})
+//   .update(updatedRecipe)
+//   .then(upRec => {
+//     return trx("instructions").where({recipe_id: changes.id})
+//     // then "Edits" gets a new row with a revision number + the whole JSON obj
+
+//   })
+// })
 
 function remove(id) {
   // TODO: add code here
