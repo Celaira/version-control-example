@@ -10,11 +10,29 @@ module.exports = {
 };
 
 function find() {
-  return db('recipes as r').join('instructions as i', 'r.id', '=', 'i.recipe_id').select('r.*', db.raw(`json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`)).groupBy('r.id');
+  return db("recipes as r")
+    .join("instructions as i", "r.id", "=", "i.recipe_id")
+    .select(
+      "r.*",
+      db.raw(
+        `json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`
+      )
+    )
+    .groupBy("r.id");
 }
 
 function findById(id) {
-    return db('recipes as r').where('r.id', '=', id).join('instructions as i', 'r.id', '=', 'i.recipe_id').select('r.*', db.raw(`json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`)).groupBy('r.id').first();
+  return db("recipes as r")
+    .where("r.id", "=", id)
+    .join("instructions as i", "r.id", "=", "i.recipe_id")
+    .select(
+      "r.*",
+      db.raw(
+        `json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`
+      )
+    )
+    .groupBy("r.id")
+    .first();
 }
 
 function findByTitle(title) {
@@ -28,51 +46,77 @@ function add(recipe) {
   return db("recipes")
     .insert(recipeEntry, "id")
     .then(rec => {
-        const [id] = rec;
-        const InstEntries = instructions.map((inst, i) => {
-            return { step_number: i +1, body: inst.body, recipe_id: id }
-        })
-        
-        return db('instructions').insert(InstEntries).then(inst_rec => {
-          return findById(id);
-        })
+      const [id] = rec;
+      const InstEntries = instructions.map((inst, i) => {
+        return { step_number: i + 1, body: inst.body, recipe_id: id };
+      });
 
+      return db("instructions")
+        .insert(InstEntries)
+        .then(inst_rec => {
+          return findById(id);
+        });
     });
 }
 
-    /*  Future Megan! Remove the transaction and figure out how to convert the recipe
+function addInstruction(id, instructions) {
+  const InstEntries = instructions.map((inst, i) => {
+    return { step_number: i + 1, body: inst.body, recipe_id: id };
+  });
+
+  return db("instructions").insert(InstEntries);
+}
+/*  Future Megan! Remove the transaction and figure out how to convert the recipe
      and instruction data into stringified json and add it to the edits table
      */
 function updateRecipe(id, changes) {
   // TODO: add code here
-      const updatedRecipe = {
-      title: changes.title,
-      prep_time: changes.prep_time,
-      cook_time: changes.cook_time,
-      notes: changes.notes
-    }
+  const updatedRecipe = {
+    title: changes.title,
+    prep_time: changes.prep_time,
+    cook_time: changes.cook_time,
+    notes: changes.notes
+  };
 
-    return db("recipes").where("id", id).update(updatedRecipe).then(upInst => {
-      const updatedInstructions = changes.instructions.map((inst, i) => {
-        if(!inst.step_number) {
-        return db("instructions").insert({ step_number: i +1, body: inst.body, recipe_id: id })
+  const fullRecipe = {
+    ...updatedRecipe,
+    instructions: changes.instructions
+  };
+
+  const Edits = {
+    owner_id: changes.author_id,
+    recipe_id: id,
+    changes: JSON.stringify(fullRecipe)
+  };
+
+  return db("recipes")
+    .where("id", id)
+    .update(updatedRecipe)
+    .then(upInst => {
+      changes.instructions.map((inst, i) => {
+        if (!inst.step_number) {
+          const instruct = {
+            step_number: i + 1,
+            body: inst.body,
+            recipe_id: id
+          };
+          return db("instructions").insert(instruct);
         } else {
-          return db("instructions").where({recipe_id: id }).update({body: inst.body}).then(ed => {
-            const Edits = {
-              owner_id: changes.author_id,
-              recipe_id: id,
-              changes: JSON.stringify(updatedRecipe)
-            }
-
-            return db("edits").insert(Edits)
-          })
-          
+          console.log("has a step number");
+          return db("instructions")
+            .where({ recipe_id: id })
+            .andWhere({ step_number: inst.step_number })
+            .update({ body: inst.body });
         }
-      })
-      
-      return findById(id)
+      });
     })
-
+    .then(ed => {
+      return db("edits")
+        .insert(Edits)
+        .then(eds => {
+          return findById(id);
+        });
+    });
 
   // return db.transaction(trx => {
   //   const updatedRecipe = {
@@ -82,20 +126,15 @@ function updateRecipe(id, changes) {
   //     notes: changes.notes
   //   }
 
-
   //   trx("recipes")
   //   .where({id: changes.id})
   //   .update(updatedRecipe)
   //   .then(upRec => {
   //     return trx("instructions").where({recipe_id: changes.id})
   //     // then "Edits" gets a new row with a revision number + the whole JSON obj
-      
+
   //   })
   // })
-
-
-
-
 }
 
 function remove(id) {
