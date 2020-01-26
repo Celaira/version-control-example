@@ -12,13 +12,15 @@ module.exports = {
 function find() {
   return db("recipes as r")
     .join("instructions as i", "r.id", "=", "i.recipe_id")
-    .select(
-      "r.*",
-      db.raw(
-        `json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`
-      )
-    )
-    .groupBy("r.id");
+    .count("r.id")
+    .first();
+  // .select(
+  //   "r.*",
+  //   db.raw(
+  //     `json_agg(json_build_object('step', i.step_number, 'body', i.body)) as instructions`
+  //   )
+  // )
+  // .groupBy("r.id");
 }
 
 function findById(id) {
