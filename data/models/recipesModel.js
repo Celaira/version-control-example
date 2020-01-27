@@ -146,7 +146,11 @@ function updateRecipe(id, changes) {
 
 //   })
 // })
-
+/**
+ * duplicates a recipe in the database, giving it the user who duplicated it ownership over the duplicate
+ * @param  {Number} recipe_id
+ * @param  {Object} info
+ */
 function fork_recipe(recipe_id, info) {
   const { author_id, forked_from } = info
   return findById(recipe_id).then(res => {
