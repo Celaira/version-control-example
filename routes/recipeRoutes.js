@@ -17,7 +17,10 @@ router.post("/:id", mid.restrict, (req, res) => {
     author_id: req.user.subject,
     forked_from: req.params.id
   }
-  recipes.fork_recipe(req.params.id, recipe)
+  recipes
+    .fork_recipe(req.params.id, recipe)
+    .then(saved => res.status(200).json(saved))
+    .catch(err => res.status(500).json(err.stack))
 })
 
 router.post("/", mid.restrict, (req, res) => {

@@ -150,6 +150,7 @@ function updateRecipe(id, changes) {
 function fork_recipe(recipe_id, info) {
   const { author_id, forked_from } = info
   return findById(recipe_id).then(res => {
+    console.log(res)
     const { instructions, ...recipe } = res
     delete recipe.id
     recipe.author_id = author_id
@@ -167,9 +168,9 @@ function fork_recipe(recipe_id, info) {
         })
 
         return db("instructions")
-          .insert(InstEntries, "id")
+          .insert(InstEntries)
           .then(inst_rec => {
-            return id
+            return findById(id)
           })
       })
   })
