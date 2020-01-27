@@ -24,8 +24,6 @@ router.post("/:id", mid.restrict, (req, res) => {
 })
 
 router.post("/", mid.restrict, (req, res) => {
-  console.log(req.user)
-
   let recipe = {
     author_id: req.user.subject,
     ...req.body

@@ -27,7 +27,6 @@ There is a small amount of object mutation in this implementation of forking. Th
 function fork_recipe(recipe_id, info) {
   const { author_id, forked_from } = info
   return findById(recipe_id).then(res => {
-    console.log(res)
     const { instructions, ...recipe } = res
     delete recipe.id
     recipe.author_id = author_id
